@@ -29,14 +29,8 @@ class Categorie
      */
     private $date_creation;
 
-    /**
-     * @ORM\OneToMany(targetEntity=Film::class, mappedBy="categorie")
-     */
-    private $films;
-
     public function __construct($id)
     {
-        $this->films = new ArrayCollection();
         $this->id = $id;
     }
 
@@ -65,37 +59,6 @@ class Categorie
     public function setDateCreation(\DateTimeInterface $date_creation): self
     {
         $this->date_creation = $date_creation;
-
-        return $this;
-    }
-
-    /**
-     * @return Collection|Film[]
-     */
-    public function getFilms(): Collection
-    {
-        return $this->films;
-    }
-
-    public function addFilm(Film $film): self
-    {
-        if (!$this->films->contains($film)) {
-            $this->films[] = $film;
-            $film->setCategorie($this);
-        }
-
-        return $this;
-    }
-
-    public function removeFilm(Film $film): self
-    {
-        if ($this->films->contains($film)) {
-            $this->films->removeElement($film);
-            // set the owning side to null (unless already changed)
-            if ($film->getCategorie() === $this) {
-                $film->setCategorie(null);
-            }
-        }
 
         return $this;
     }

@@ -45,7 +45,8 @@ class Film
     private $date_creation;
 
     /**
-     * @ORM\ManyToOne(targetEntity=Categorie::class, inversedBy="films", cascade={"persist"})
+     * @Assert\NotBlank(message="La categorie ne doit pas être vide")
+     * @ORM\ManyToOne(targetEntity=Categorie::class, cascade={"persist"})
      * @ORM\JoinColumn(nullable=false)
      */
     private $categorie;
