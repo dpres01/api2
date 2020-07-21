@@ -20,15 +20,25 @@ use App\Entity\Categorie;
 class DefaultController extends AbstractController
 {
     /**
-     * @Route("/liste/{id}", name="lister_films", methods="GET")
+     * Liste films par page selon categorie choisie
+     *
+     * @Route("/categorie/{id}", name="lister_films", methods="GET")
+     *
+     * @param Request $request      
+     * @param Categorie $categorie.
+     *
+     * @return JsonResponse
      */
-    public function listerFilm(Request $request): JsonResponse
+    public function listerFilm(Request $request, Categorie $categorie): JsonResponse
     {   
         $em = $this->getDoctrine()->getManager();
         $retour = $em->getRepository(Film::class)
-                    ->findFilmByCategory($request->query->get("page"),
-                        $request->query->get("nbreMax"),$categorie =null);
-        return $this->json($retour);
+                    ->findFilmByCategory(
+                                           (int)$request->query->get("page"),
+                                           (int)$request->query->get("nbreMax"),
+                                           $categorie
+                                        );
+        return $this->json($retour[0],$retour["status"]);
     }
     
     /**
@@ -67,7 +77,7 @@ class DefaultController extends AbstractController
      */
     public function modificationFilm(
         Request $request,
-        /*Film */$film,
+        Film $film,
         SerializerInterface $serializer,
         ConvertisseurFilm $converteur,
         EnregistreurFilm $enregistreur
@@ -84,28 +94,36 @@ class DefaultController extends AbstractController
     }
 
     /**
+     * suppression d'un film 
+     *
      * @Route("/supprimer/{id}", name="supprimer_film", methods="DELETE")
      *
+     * @param Film $film.
+     *
+     * @return JsonResponse
      */
     public function supressionFilm(Film $film): JsonResponse
     {
         $em = $this->getDoctrine()->getManager();
         $em->remove($film);
         $em->flush();
-        return new JsonResponse(["message"=>"Un film a été supprimé " ],Response::HTTP_CREATED); 
+        return new JsonResponse(
+            ["message"=>"Un film a été supprimé " ],
+            Response::HTTP_CREATED
+        ); 
     }
 
     /**
      * Affichage d'un film
      *
-     * @Route("/film/{id}", name="aficher_film", methods="GET")
+     * @Route("/{id}", name="aficher_film", methods="GET")
      *
      * @param Film $film.
      *
      * @return JsonResponse
      */
     public function affichageFilm(Film $film): JsonResponse
-    {
+    {    
         return $this->json($film);
     }
 
@@ -114,7 +132,7 @@ class DefaultController extends AbstractController
      *
      * @Route("/search", name="recherche_film", methods="GET")
      *
-     * @param Film $film.
+     * @param Request $request.
      *
      * @return JsonResponse
      */

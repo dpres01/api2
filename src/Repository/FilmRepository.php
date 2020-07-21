@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Entity\Film;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * @method Film|null find($id, $lockMode = null, $lockVersion = null)
@@ -19,9 +20,15 @@ class FilmRepository extends ServiceEntityRepository
         parent::__construct($registry, Film::class);
     }
 
-    // /**
-    //  * @return Film[] Returns an array of Film objects
-    //  */
+     /**
+      * recherche filme par : categorie,titre,date_creation 
+      *
+      * @param $categorie      
+      * @param $titre.
+      * @param $date.
+      *
+      * @return  array 
+      */
     
     public function rechercheFilm($categorie,$titre,$date): array
     {
@@ -38,42 +45,73 @@ class FilmRepository extends ServiceEntityRepository
         }
 
         if (! empty($date) ) {
-            //$date = new \DateTime($date);
-            //$date->format("Y-m-d");
             $qb->andWhere($qb->expr()->eq('f.date_creation', ':date'));
             $qb->setParameter(':date', $date); 
         }
         return $qb->getQuery()->getResult();
     }
     
-
+    
+     /**
+      * recherche filme par page suivant categorie X 
+      *
+      * @param $page      
+      * @param $maxResult
+      * @param $categorie
+      *
+      * @return  array 
+      */
     public function findFilmByCategory($page,$maxResult,$categorie): array
     {   
-        if ( empty($page) || is_int($page) || $page < 1 ){
-            return array("error" => "page n'existe pas");
+        
+        if ( empty($page) || $page < 1 ){
+            return array(
+                array("error" => "page n'existe pas"),
+                "status" => Response::HTTP_BAD_REQUEST
+            );
         }
 
-        if ( (empty($maxResult) || is_int($maxResult) || $maxResult < 1) && $maxResult < $page){
-            return array("error" => "max n'existe pas ou inferieur à page ");
+        if ( empty($maxResult) || $maxResult < 1 ) {
+            return array(
+                array("error" => "max n'existe pas ou inferieur à page "), 
+                "status" => Response::HTTP_BAD_REQUEST
+            );
         }
         
-        if ( emty($categorie) ) return array("error"=>"la categorie ne doit pas être vide");
+        $nbreLigne = $this->compterFilmCategorie($categorie);
+        
+        if($nbreLigne < $maxResult){
+            return array(
+                array("error" => "nombre de ligne ne doit pas être < au max.page"),
+                "status" => Response::HTTP_BAD_REQUEST
+            );   
+        }
 
-        $this->createQueryBuilder('f')
+        $nbrePage = intval(ceil($nbreLigne/$maxResult));
+
+        $qb = $this->createQueryBuilder('f')
             ->andWhere('f.categorie = :cat')
             ->setParameter('cat', $categorie);
 
-        $pageActuelle = (intval($page) - 1) * intval($maxResult);
-        $qb->setFirstResult($pageActuelle)->setMaxResults(intval($maxResult));     
+        $debut = (intval($page) - 1) * intval($maxResult);
+        $qb->setFirstResult($debut)->setMaxResults(intval($maxResult));     
            
-        $result = $qb->getQuery()->getOneOrNullResult();
-        $nbrePage = $this->compterFilmCategorie($categorie);
-
-        return array("reslutat_req" => $result,"nbre_page" => $nbrePage);
+        $result = $qb->getQuery()->getResult();
+        
+         
+        return array(
+                    array(
+                        "films" => $result,
+                        "nbre_page" => $nbrePage,
+                        "page_actuelle"=>$page
+                    ),
+                   "status" => Response::HTTP_OK
+                );
     }
 
     public function compterFilmCategorie($categorie){
-        return $this->createQueryBuilder('count(f)')
+        return $this->createQueryBuilder('f')
+            ->select('count(f.id)')
             ->andWhere('f.categorie = :cat')
             ->setParameter('cat', $categorie)
             ->getQuery() ->getSingleScalarResult();

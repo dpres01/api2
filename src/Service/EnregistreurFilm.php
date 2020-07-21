@@ -50,9 +50,7 @@ class EnregistreurFilm{
 			}else{
 			    $message = array("message" => "Le film a été bien modifié");	
 			}
-
 		    $this->em->flush();
-             var_dump($film,$modif);exit;
 		    return array($message,"status" => Response::HTTP_CREATED);
 		} catch (\Exception $e) {
 			return array(array("error" => $e),"status" => Response::HTTP_INTERNAL_SERVER_ERROR);

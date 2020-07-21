@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\FilmRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 /**
  * @ORM\Entity(repositoryClass=FilmRepository::class)
@@ -12,6 +13,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 class Film
 {
     /**
+     * @Groups("film")
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
@@ -45,9 +47,12 @@ class Film
     private $date_creation;
 
     /**
+     * @Groups("film")
      * @Assert\NotBlank(message="La categorie ne doit pas être vide")
      * @ORM\ManyToOne(targetEntity=Categorie::class, cascade={"persist"})
-     * @ORM\JoinColumn(nullable=false)
+     * @ORM\JoinColumns({
+     * @ORM\JoinColumn(name="categorie_id", referencedColumnName="id", nullable=false)
+     * })
      */
     private $categorie;
 
